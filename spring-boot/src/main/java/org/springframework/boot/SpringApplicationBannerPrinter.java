@@ -56,9 +56,9 @@ class SpringApplicationBannerPrinter {
 	}
 
 	public Banner print(Environment environment, Class<?> sourceClass, Log logger) {
-		Banner banner = getBanner(environment);
+		Banner banner = getBanner(environment); // 从环境中获取banner
 		try {
-			logger.info(createStringFromBanner(banner, environment, sourceClass));
+			logger.info(createStringFromBanner(banner, environment, sourceClass)); // 日志输出banner
 		}
 		catch (UnsupportedEncodingException ex) {
 			logger.warn("Failed to create String for banner", ex);
@@ -67,15 +67,15 @@ class SpringApplicationBannerPrinter {
 	}
 
 	public Banner print(Environment environment, Class<?> sourceClass, PrintStream out) {
-		Banner banner = getBanner(environment);
+		Banner banner = getBanner(environment); // 获取banner
 		banner.printBanner(environment, sourceClass, out);
 		return new PrintedBanner(banner, sourceClass);
 	}
 
 	private Banner getBanner(Environment environment) {
 		Banners banners = new Banners();
-		banners.addIfNotNull(getImageBanner(environment));
-		banners.addIfNotNull(getTextBanner(environment));
+		banners.addIfNotNull(getImageBanner(environment)); // 图片banner
+		banners.addIfNotNull(getTextBanner(environment)); // 文字banner
 		if (banners.hasAtLeastOneBanner()) {
 			return banners;
 		}

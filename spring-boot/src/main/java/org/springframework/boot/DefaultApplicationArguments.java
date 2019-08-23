@@ -39,7 +39,7 @@ public class DefaultApplicationArguments implements ApplicationArguments {
 
 	public DefaultApplicationArguments(String[] args) {
 		Assert.notNull(args, "Args must not be null");
-		this.source = new Source(args);
+		this.source = new Source(args); // 解析main方法传入的参数
 		this.args = args;
 	}
 

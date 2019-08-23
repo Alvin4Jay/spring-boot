@@ -86,7 +86,7 @@ public class EventPublishingRunListener implements SpringApplicationRunListener,
 			if (listener instanceof ApplicationContextAware) {
 				((ApplicationContextAware) listener).setApplicationContext(context);
 			}
-			context.addApplicationListener(listener);
+			context.addApplicationListener(listener); // 注册ApplicationListener到上下文context
 		}
 		this.initialMulticaster.multicastEvent(
 				new ApplicationPreparedEvent(this.application, this.args, context));
@@ -98,7 +98,7 @@ public class EventPublishingRunListener implements SpringApplicationRunListener,
 		if (context != null && context.isActive()) {
 			// Listeners have been registered to the application context so we should
 			// use it at this point if we can
-			context.publishEvent(event);
+			context.publishEvent(event); // 发送ApplicationReadyEvent、ApplicationFailedEvent事件
 		}
 		else {
 			// An inactive context may not have a multicaster so we use our multicaster to

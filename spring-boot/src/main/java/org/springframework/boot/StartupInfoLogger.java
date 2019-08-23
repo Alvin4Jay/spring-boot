@@ -45,10 +45,10 @@ class StartupInfoLogger {
 	public void logStarting(Log log) {
 		Assert.notNull(log, "Log must not be null");
 		if (log.isInfoEnabled()) {
-			log.info(getStartupMessage());
+			log.info(getStartupMessage()); // 输出启动日志
 		}
 		if (log.isDebugEnabled()) {
-			log.debug(getRunningMessage());
+			log.debug(getRunningMessage()); // 输出运行日志
 		}
 	}
 

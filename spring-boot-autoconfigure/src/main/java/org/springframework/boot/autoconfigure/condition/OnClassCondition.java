@@ -61,15 +61,15 @@ class OnClassCondition extends SpringBootCondition
 			AutoConfigurationMetadata autoConfigurationMetadata) {
 		ConditionEvaluationReport report = getConditionEvaluationReport();
 		ConditionOutcome[] outcomes = getOutcomes(autoConfigurationClasses,
-				autoConfigurationMetadata);
+				autoConfigurationMetadata); // 根据@ConditionaalOnClass注解，判断配置类是否生效
 		boolean[] match = new boolean[outcomes.length];
 		for (int i = 0; i < outcomes.length; i++) {
 			match[i] = (outcomes[i] == null || outcomes[i].isMatch());
-			if (!match[i] && outcomes[i] != null) {
-				logOutcome(autoConfigurationClasses[i], outcomes[i]);
+			if (!match[i] && outcomes[i] != null) { // 不匹配
+				logOutcome(autoConfigurationClasses[i], outcomes[i]); // 输出trace日志
 				if (report != null) {
 					report.recordConditionEvaluation(autoConfigurationClasses[i], this,
-							outcomes[i]);
+							outcomes[i]); //记录
 				}
 			}
 		}
@@ -92,7 +92,7 @@ class OnClassCondition extends SpringBootCondition
 		// things worse
 		int split = autoConfigurationClasses.length / 2;
 		OutcomesResolver firstHalfResolver = createOutcomesResolver(
-				autoConfigurationClasses, 0, split, autoConfigurationMetadata);
+				autoConfigurationClasses, 0, split, autoConfigurationMetadata);  // 创建解析器
 		OutcomesResolver secondHalfResolver = new StandardOutcomesResolver(
 				autoConfigurationClasses, split, autoConfigurationClasses.length,
 				autoConfigurationMetadata, this.beanClassLoader);
@@ -196,7 +196,7 @@ class OnClassCondition extends SpringBootCondition
 	}
 
 	private enum MatchType {
-
+		// 存在
 		PRESENT {
 
 			@Override
@@ -205,7 +205,7 @@ class OnClassCondition extends SpringBootCondition
 			}
 
 		},
-
+		// 不存在
 		MISSING {
 
 			@Override
@@ -214,7 +214,7 @@ class OnClassCondition extends SpringBootCondition
 			}
 
 		};
-
+		// 判断类是否存在
 		private static boolean isPresent(String className, ClassLoader classLoader) {
 			if (classLoader == null) {
 				classLoader = ClassUtils.getDefaultClassLoader();
@@ -309,12 +309,12 @@ class OnClassCondition extends SpringBootCondition
 		private ConditionOutcome[] getOutcomes(final String[] autoConfigurationClasses,
 				int start, int end, AutoConfigurationMetadata autoConfigurationMetadata) {
 			ConditionOutcome[] outcomes = new ConditionOutcome[end - start];
-			for (int i = start; i < end; i++) {
+			for (int i = start; i < end; i++) { // 不包含end
 				String autoConfigurationClass = autoConfigurationClasses[i];
 				Set<String> candidates = autoConfigurationMetadata
 						.getSet(autoConfigurationClass, "ConditionalOnClass");
 				if (candidates != null) {
-					outcomes[i - start] = getOutcome(candidates);
+					outcomes[i - start] = getOutcome(candidates); // 检查依赖的类是否存在
 				}
 			}
 			return outcomes;
@@ -323,9 +323,9 @@ class OnClassCondition extends SpringBootCondition
 		private ConditionOutcome getOutcome(Set<String> candidates) {
 			try {
 				List<String> missing = getMatches(candidates, MatchType.MISSING,
-						this.beanClassLoader);
-				if (!missing.isEmpty()) {
-					return ConditionOutcome.noMatch(
+						this.beanClassLoader); // 判断指定依赖的类，哪些不存在
+				if (!missing.isEmpty()) { // 不为空，表示有些类不存在
+					return ConditionOutcome.noMatch( // 不匹配
 							ConditionMessage.forCondition(ConditionalOnClass.class)
 									.didNotFind("required class", "required classes")
 									.items(Style.QUOTE, missing));

@@ -48,7 +48,7 @@ class SpringBootBanner implements Banner {
 		for (String line : BANNER) {
 			printStream.println(line);
 		}
-		String version = SpringBootVersion.getVersion();
+		String version = SpringBootVersion.getVersion(); // SpringBoot版本
 		version = (version != null) ? " (v" + version + ")" : "";
 		String padding = "";
 		while (padding.length() < STRAP_LINE_SIZE

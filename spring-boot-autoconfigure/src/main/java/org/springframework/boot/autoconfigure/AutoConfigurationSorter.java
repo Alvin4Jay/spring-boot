@@ -36,7 +36,7 @@ import org.springframework.util.Assert;
 /**
  * Sort {@link EnableAutoConfiguration auto-configuration} classes into priority order by
  * reading {@link AutoConfigureOrder}, {@link AutoConfigureBefore} and
- * {@link AutoConfigureAfter} annotations (without loading classes).
+ * {@link AutoConfigureAfter} annotations (without loading classes). 不需要加载类的情况下
  *
  * @author Phillip Webb
  */
@@ -57,9 +57,9 @@ class AutoConfigurationSorter {
 		final AutoConfigurationClasses classes = new AutoConfigurationClasses(
 				this.metadataReaderFactory, this.autoConfigurationMetadata, classNames);
 		List<String> orderedClassNames = new ArrayList<String>(classNames);
-		// Initially sort alphabetically
+		// Initially sort alphabetically 按字母顺序排序
 		Collections.sort(orderedClassNames);
-		// Then sort by order
+		// Then sort by order 按@AutoConfigureOrder注解指定的order值排序
 		Collections.sort(orderedClassNames, new Comparator<String>() {
 
 			@Override
@@ -77,23 +77,26 @@ class AutoConfigurationSorter {
 
 	private List<String> sortByAnnotation(AutoConfigurationClasses classes,
 			List<String> classNames) {
-		List<String> toSort = new ArrayList<String>(classNames);
-		Set<String> sorted = new LinkedHashSet<String>();
-		Set<String> processing = new LinkedHashSet<String>();
+		List<String> toSort = new ArrayList<String>(classNames); // 待排序的有序列表（已经按照字典和order进行排序）
+		Set<String> sorted = new LinkedHashSet<String>();   // 已经排序的有序列表
+		Set<String> processing = new LinkedHashSet<String>(); // 处理中的有序列表，类似中间缓存队列
 		while (!toSort.isEmpty()) {
 			doSortByAfterAnnotation(classes, toSort, sorted, processing, null);
 		}
 		return new ArrayList<String>(sorted);
 	}
 
+	// 根据@AutoConfigurationAfter注解排序
 	private void doSortByAfterAnnotation(AutoConfigurationClasses classes,
 			List<String> toSort, Set<String> sorted, Set<String> processing,
 			String current) {
 		if (current == null) {
-			current = toSort.remove(0);
+			current = toSort.remove(0); //当前为空，则从待排序列表中取第一个
 		}
 		processing.add(current);
+		// getClassesRequestedAfter获取当前配置类之前应用的配置类
 		for (String after : classes.getClassesRequestedAfter(current)) {
+			// 循环依赖判断断言
 			Assert.state(!processing.contains(after),
 					"AutoConfigure cycle detected between " + current + " and " + after);
 			if (!sorted.contains(after) && toSort.contains(after)) {
@@ -121,8 +124,9 @@ class AutoConfigurationSorter {
 			return this.classes.get(className);
 		}
 
+		// 获取在className之前应用的自动配置类
 		public Set<String> getClassesRequestedAfter(String className) {
-			Set<String> rtn = new LinkedHashSet<String>();
+			Set<String> rtn = new LinkedHashSet<String>(); // LinkedHashSet去重，并保证顺序
 			rtn.addAll(get(className).getAfter());
 			for (Map.Entry<String, AutoConfigurationClass> entry : this.classes
 					.entrySet()) {
@@ -155,8 +159,8 @@ class AutoConfigurationSorter {
 			this.className = className;
 			this.metadataReaderFactory = metadataReaderFactory;
 			this.autoConfigurationMetadata = autoConfigurationMetadata;
-			this.before = readBefore();
-			this.after = readAfter();
+			this.before = readBefore(); // 读取在当前自动配置类之后应用的配置类
+			this.after = readAfter(); // 读取在当前自动配置类之前应用的配置类
 		}
 
 		public Set<String> getBefore() {
@@ -183,7 +187,7 @@ class AutoConfigurationSorter {
 				return this.autoConfigurationMetadata.getSet(this.className,
 						"AutoConfigureBefore", Collections.<String>emptySet());
 			}
-			return getAnnotationValue(AutoConfigureBefore.class);
+			return getAnnotationValue(AutoConfigureBefore.class);  // 这里不需要类加载
 		}
 
 		private Set<String> readAfter() {
@@ -196,7 +200,7 @@ class AutoConfigurationSorter {
 
 		private Set<String> getAnnotationValue(Class<?> annotation) {
 			Map<String, Object> attributes = getAnnotationMetadata()
-					.getAnnotationAttributes(annotation.getName(), true);
+					.getAnnotationAttributes(annotation.getName(), true); // 获取注解对应的属性
 			if (attributes == null) {
 				return Collections.emptySet();
 			}
@@ -210,7 +214,7 @@ class AutoConfigurationSorter {
 			if (this.annotationMetadata == null) {
 				try {
 					MetadataReader metadataReader = this.metadataReaderFactory
-							.getMetadataReader(this.className);
+							.getMetadataReader(this.className); // 获取自动配置类对应的MetadataReader
 					this.annotationMetadata = metadataReader.getAnnotationMetadata();
 				}
 				catch (IOException ex) {

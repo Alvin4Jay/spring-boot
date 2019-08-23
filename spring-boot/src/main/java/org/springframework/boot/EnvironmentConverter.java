@@ -81,7 +81,7 @@ final class EnvironmentConverter {
 			ClassLoader classLoader) {
 		try {
 			Class<?> webEnvironmentClass = ClassUtils
-					.forName(CONFIGURABLE_WEB_ENVIRONMENT_CLASS, classLoader);
+					.forName(CONFIGURABLE_WEB_ENVIRONMENT_CLASS, classLoader); // 加载ConfigurableWebEnvironment类
 			return (webEnvironmentClass.isInstance(environment));
 		}
 		catch (Throwable ex) {
@@ -92,23 +92,23 @@ final class EnvironmentConverter {
 	private StandardEnvironment convertToStandardEnvironment(
 			ConfigurableEnvironment environment) {
 		StandardEnvironment result = new StandardEnvironment();
-		result.setActiveProfiles(environment.getActiveProfiles());
+		result.setActiveProfiles(environment.getActiveProfiles()); // 激活的profile设置
 		result.setConversionService(environment.getConversionService());
-		copyNonServletPropertySources(environment, result);
+		copyNonServletPropertySources(environment, result); // 属性源设置
 		return result;
 	}
 
 	private void copyNonServletPropertySources(ConfigurableEnvironment source,
 			StandardEnvironment target) {
-		removeAllPropertySources(target.getPropertySources());
+		removeAllPropertySources(target.getPropertySources()); // target移除所有属性源
 		for (PropertySource<?> propertySource : source.getPropertySources()) {
 			if (!SERVLET_ENVIRONMENT_SOURCE_NAMES.contains(propertySource.getName())) {
-				target.getPropertySources().addLast(propertySource);
+				target.getPropertySources().addLast(propertySource); // 过滤servlet属性源
 			}
 		}
 	}
 
-	private void removeAllPropertySources(MutablePropertySources propertySources) {
+	private void removeAllPropertySources(MutablePropertySources propertySources) { // 移除所有属性源
 		Set<String> names = new HashSet<String>();
 		for (PropertySource<?> propertySource : propertySources) {
 			names.add(propertySource.getName());

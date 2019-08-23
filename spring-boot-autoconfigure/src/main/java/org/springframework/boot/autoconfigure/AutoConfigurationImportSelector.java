@@ -90,16 +90,16 @@ public class AutoConfigurationImportSelector
 		}
 		try {
 			AutoConfigurationMetadata autoConfigurationMetadata = AutoConfigurationMetadataLoader
-					.loadMetadata(this.beanClassLoader);
-			AnnotationAttributes attributes = getAttributes(annotationMetadata);
+					.loadMetadata(this.beanClassLoader); // spring-autoconfigure-metadata.properties元数据
+			AnnotationAttributes attributes = getAttributes(annotationMetadata); // @EnableAutoConfiguration注解属性
 			List<String> configurations = getCandidateConfigurations(annotationMetadata,
-					attributes);
-			configurations = removeDuplicates(configurations);
-			configurations = sort(configurations, autoConfigurationMetadata);
-			Set<String> exclusions = getExclusions(annotationMetadata, attributes);
+					attributes); // 获取自动配置类
+			configurations = removeDuplicates(configurations); // 去重
+			configurations = sort(configurations, autoConfigurationMetadata); // 配置类排序
+			Set<String> exclusions = getExclusions(annotationMetadata, attributes); // 排除的配置类名
 			checkExcludedClasses(configurations, exclusions);
-			configurations.removeAll(exclusions);
-			configurations = filter(configurations, autoConfigurationMetadata);
+			configurations.removeAll(exclusions); // 去除 排出的自动配置类
+			configurations = filter(configurations, autoConfigurationMetadata); // 根据@CondionalOnClass注解，过滤无效的自动配置类
 			fireAutoConfigurationImportEvents(configurations, exclusions);
 			return configurations.toArray(new String[configurations.size()]);
 		}
@@ -120,7 +120,7 @@ public class AutoConfigurationImportSelector
 	 * @return annotation attributes
 	 */
 	protected AnnotationAttributes getAttributes(AnnotationMetadata metadata) {
-		String name = getAnnotationClass().getName();
+		String name = getAnnotationClass().getName(); // @EnableAutoConfiguration
 		AnnotationAttributes attributes = AnnotationAttributes
 				.fromMap(metadata.getAnnotationAttributes(name, true));
 		Assert.notNull(attributes,
@@ -148,6 +148,7 @@ public class AutoConfigurationImportSelector
 	 */
 	protected List<String> getCandidateConfigurations(AnnotationMetadata metadata,
 			AnnotationAttributes attributes) {
+		// 根据org.springframework.boot.autoconfigure.EnableAutoConfiguration加载配置类
 		List<String> configurations = SpringFactoriesLoader.loadFactoryNames(
 				getSpringFactoriesLoaderFactoryClass(), getBeanClassLoader());
 		Assert.notEmpty(configurations,
@@ -175,7 +176,7 @@ public class AutoConfigurationImportSelector
 			}
 		}
 		if (!invalidExcludes.isEmpty()) {
-			handleInvalidExcludes(invalidExcludes);
+			handleInvalidExcludes(invalidExcludes); // 处理无效的排除
 		}
 	}
 
@@ -187,7 +188,7 @@ public class AutoConfigurationImportSelector
 	protected void handleInvalidExcludes(List<String> invalidExcludes) {
 		StringBuilder message = new StringBuilder();
 		for (String exclude : invalidExcludes) {
-			message.append("\t- ").append(exclude).append(String.format("%n"));
+			message.append("\t- ").append(exclude).append(String.format("%n")); // %n换行符
 		}
 		throw new IllegalStateException(String
 				.format("The following classes could not be excluded because they are"
@@ -210,9 +211,10 @@ public class AutoConfigurationImportSelector
 		return excluded;
 	}
 
+	// 获取外部化配置的排除的自动配置类
 	private List<String> getExcludeAutoConfigurationsProperty() {
 		if (getEnvironment() instanceof ConfigurableEnvironment) {
-			RelaxedPropertyResolver resolver = new RelaxedPropertyResolver(
+			RelaxedPropertyResolver resolver = new RelaxedPropertyResolver( // 松散绑定
 					this.environment, "spring.autoconfigure.");
 			Map<String, Object> properties = resolver.getSubProperties("exclude");
 			if (properties.isEmpty()) {
@@ -235,13 +237,16 @@ public class AutoConfigurationImportSelector
 		return Arrays.asList((exclude != null) ? exclude : new String[0]);
 	}
 
+	// 自动配置类排序
 	private List<String> sort(List<String> configurations,
 			AutoConfigurationMetadata autoConfigurationMetadata) throws IOException {
+		// getMetadataReaderFactory(): ConcurrentReferenceCachingMetadataReaderFactory
 		configurations = new AutoConfigurationSorter(getMetadataReaderFactory(),
 				autoConfigurationMetadata).getInPriorityOrder(configurations);
 		return configurations;
 	}
 
+	// 根据@CondionalOnClass注解，过滤无效的自动配置类
 	private List<String> filter(List<String> configurations,
 			AutoConfigurationMetadata autoConfigurationMetadata) {
 		long startTime = System.nanoTime();
@@ -250,6 +255,7 @@ public class AutoConfigurationImportSelector
 		boolean skipped = false;
 		for (AutoConfigurationImportFilter filter : getAutoConfigurationImportFilters()) {
 			invokeAwareMethods(filter);
+			// 根据@CondionalOnClass注解，过滤无效的自动配置类
 			boolean[] match = filter.match(candidates, autoConfigurationMetadata);
 			for (int i = 0; i < match.length; i++) {
 				if (!match[i]) {
@@ -259,7 +265,7 @@ public class AutoConfigurationImportSelector
 			}
 		}
 		if (!skipped) {
-			return configurations;
+			return configurations; // 全部生效，直接返回
 		}
 		List<String> result = new ArrayList<String>(candidates.length);
 		for (int i = 0; i < candidates.length; i++) {
@@ -278,7 +284,7 @@ public class AutoConfigurationImportSelector
 
 	protected List<AutoConfigurationImportFilter> getAutoConfigurationImportFilters() {
 		return SpringFactoriesLoader.loadFactories(AutoConfigurationImportFilter.class,
-				this.beanClassLoader);
+				this.beanClassLoader); // onClassCondition
 	}
 
 	private MetadataReaderFactory getMetadataReaderFactory() {
@@ -293,7 +299,7 @@ public class AutoConfigurationImportSelector
 	}
 
 	protected final <T> List<T> removeDuplicates(List<T> list) {
-		return new ArrayList<T>(new LinkedHashSet<T>(list));
+		return new ArrayList<T>(new LinkedHashSet<T>(list)); // LinkedHashSet去重并保留顺序，再转为ArrayList，顺序不变
 	}
 
 	protected final List<String> asList(AnnotationAttributes attributes, String name) {
@@ -303,13 +309,14 @@ public class AutoConfigurationImportSelector
 
 	private void fireAutoConfigurationImportEvents(List<String> configurations,
 			Set<String> exclusions) {
+		// listeners: ConditionEvaluationReportAutoConfigurationImportListener
 		List<AutoConfigurationImportListener> listeners = getAutoConfigurationImportListeners();
 		if (!listeners.isEmpty()) {
 			AutoConfigurationImportEvent event = new AutoConfigurationImportEvent(this,
 					configurations, exclusions);
 			for (AutoConfigurationImportListener listener : listeners) {
-				invokeAwareMethods(listener);
-				listener.onAutoConfigurationImportEvent(event);
+				invokeAwareMethods(listener); // 调用xxxAware()方法
+				listener.onAutoConfigurationImportEvent(event); // 回调
 			}
 		}
 	}

@@ -49,7 +49,7 @@ final class AutoConfigurationMetadataLoader {
 					: ClassLoader.getSystemResources(path);
 			Properties properties = new Properties();
 			while (urls.hasMoreElements()) {
-				properties.putAll(PropertiesLoaderUtils
+				properties.putAll(PropertiesLoaderUtils // 合并所有的spring-autoconfigure-metadata.properties中的key value
 						.loadProperties(new UrlResource(urls.nextElement())));
 			}
 			return loadMetadata(properties);
@@ -101,7 +101,7 @@ final class AutoConfigurationMetadataLoader {
 		public Set<String> getSet(String className, String key,
 				Set<String> defaultValue) {
 			String value = get(className, key);
-			return (value != null) ? StringUtils.commaDelimitedListToSet(value)
+			return (value != null) ? StringUtils.commaDelimitedListToSet(value) // 逗号分隔
 					: defaultValue;
 		}
 
@@ -112,7 +112,7 @@ final class AutoConfigurationMetadataLoader {
 
 		@Override
 		public String get(String className, String key, String defaultValue) {
-			String value = this.properties.getProperty(className + "." + key);
+			String value = this.properties.getProperty(className + "." + key); // className + "." + key构成Properties文件的'key'
 			return (value != null) ? value : defaultValue;
 		}
 
