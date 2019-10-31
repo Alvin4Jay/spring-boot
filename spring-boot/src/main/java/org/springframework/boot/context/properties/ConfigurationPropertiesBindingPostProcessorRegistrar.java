@@ -47,7 +47,9 @@ public class ConfigurationPropertiesBindingPostProcessorRegistrar
 					.genericBeanDefinition(ConfigurationBeanFactoryMetaData.class);
 			BeanDefinitionBuilder bean = BeanDefinitionBuilder.genericBeanDefinition(
 					ConfigurationPropertiesBindingPostProcessor.class);
+			// 引用ConfigurationBeanFactoryMetaData bean
 			bean.addPropertyReference("beanMetaDataStore", METADATA_BEAN_NAME);
+			// 分别注册ConfigurationBeanFactoryMetaData、ConfigurationPropertiesBindingPostProcessor BeanDefinition
 			registry.registerBeanDefinition(BINDER_BEAN_NAME, bean.getBeanDefinition());
 			registry.registerBeanDefinition(METADATA_BEAN_NAME, meta.getBeanDefinition());
 		}

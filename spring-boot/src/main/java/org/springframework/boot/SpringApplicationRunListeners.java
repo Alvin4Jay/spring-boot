@@ -80,7 +80,7 @@ class SpringApplicationRunListeners {
 		}
 		catch (Throwable ex) {
 			if (exception == null) {
-				ReflectionUtils.rethrowRuntimeException(ex);
+				ReflectionUtils.rethrowRuntimeException(ex); // exception为null，若在回调应用监听器时出现异常，直接抛出
 			}
 			if (this.log.isDebugEnabled()) {
 				this.log.error("Error handling failed", ex);

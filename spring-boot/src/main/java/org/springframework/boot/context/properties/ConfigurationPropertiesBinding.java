@@ -28,6 +28,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
  * Qualifier for beans that are needed to configure the binding of
  * {@link ConfigurationProperties} (e.g. Converters).
  *
+ * 绑定@ConfigurationProperties注解Bean的属性时，使用到的工具Bean的标识@Qualifier注解，工具Bean如Converter转换器
+ *
  * @author Dave Syer
  */
 @Qualifier

@@ -92,18 +92,18 @@ public abstract class AutoConfigurationPackages {
 	 * @param packageNames the package names to set
 	 */
 	public static void register(BeanDefinitionRegistry registry, String... packageNames) {
-		if (registry.containsBeanDefinition(BEAN)) {
+		if (registry.containsBeanDefinition(BEAN)) { // bean已存在
 			BeanDefinition beanDefinition = registry.getBeanDefinition(BEAN);
 			ConstructorArgumentValues constructorArguments = beanDefinition
-					.getConstructorArgumentValues();
+					.getConstructorArgumentValues(); // 获取构造器参数值
 			constructorArguments.addIndexedArgumentValue(0,
-					addBasePackages(constructorArguments, packageNames));
+					addBasePackages(constructorArguments, packageNames)); // 更新包集合
 		}
 		else {
 			GenericBeanDefinition beanDefinition = new GenericBeanDefinition();
 			beanDefinition.setBeanClass(BasePackages.class);
 			beanDefinition.getConstructorArgumentValues().addIndexedArgumentValue(0,
-					packageNames);
+					packageNames); // 设置构造器参数值，即包集合
 			beanDefinition.setRole(BeanDefinition.ROLE_INFRASTRUCTURE);
 			registry.registerBeanDefinition(BEAN, beanDefinition);
 		}
@@ -113,7 +113,7 @@ public abstract class AutoConfigurationPackages {
 			ConstructorArgumentValues constructorArguments, String[] packageNames) {
 		String[] existing = (String[]) constructorArguments
 				.getIndexedArgumentValue(0, String[].class).getValue();
-		Set<String> merged = new LinkedHashSet<String>();
+		Set<String> merged = new LinkedHashSet<String>(); // 合并包集合
 		merged.addAll(Arrays.asList(existing));
 		merged.addAll(Arrays.asList(packageNames));
 		return merged.toArray(new String[merged.size()]);
@@ -147,7 +147,7 @@ public abstract class AutoConfigurationPackages {
 		private final String packageName;
 
 		PackageImport(AnnotationMetadata metadata) {
-			this.packageName = ClassUtils.getPackageName(metadata.getClassName());
+			this.packageName = ClassUtils.getPackageName(metadata.getClassName()); // 获取包名
 		}
 
 		public String getPackageName() {

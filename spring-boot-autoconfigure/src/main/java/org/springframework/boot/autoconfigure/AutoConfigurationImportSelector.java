@@ -148,7 +148,7 @@ public class AutoConfigurationImportSelector
 	 */
 	protected List<String> getCandidateConfigurations(AnnotationMetadata metadata,
 			AnnotationAttributes attributes) {
-		// 根据org.springframework.boot.autoconfigure.EnableAutoConfiguration加载配置类
+		// 根据org.springframework.boot.autoconfigure.EnableAutoConfiguration注解加载配置类
 		List<String> configurations = SpringFactoriesLoader.loadFactoryNames(
 				getSpringFactoriesLoaderFactoryClass(), getBeanClassLoader());
 		Assert.notEmpty(configurations,

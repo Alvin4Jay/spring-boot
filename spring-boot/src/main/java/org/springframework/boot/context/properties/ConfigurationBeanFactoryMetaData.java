@@ -41,7 +41,7 @@ public class ConfigurationBeanFactoryMetaData implements BeanFactoryPostProcesso
 
 	private ConfigurableListableBeanFactory beanFactory;
 
-	private Map<String, MetaData> beans = new HashMap<String, MetaData>();
+	private Map<String, FactoryMetaData> beansFactoryMetadata = new HashMap<String, FactoryMetaData>();
 
 	@Override
 	public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory)
@@ -49,10 +49,10 @@ public class ConfigurationBeanFactoryMetaData implements BeanFactoryPostProcesso
 		this.beanFactory = beanFactory;
 		for (String name : beanFactory.getBeanDefinitionNames()) {
 			BeanDefinition definition = beanFactory.getBeanDefinition(name);
-			String method = definition.getFactoryMethodName();
-			String bean = definition.getFactoryBeanName();
+			String method = definition.getFactoryMethodName(); // 工厂方法，如@Bean注解方法名
+			String bean = definition.getFactoryBeanName(); // 工厂bean，如@Configuration配置类
 			if (method != null && bean != null) {
-				this.beans.put(name, new MetaData(bean, method));
+				this.beansFactoryMetadata.put(name, new FactoryMetaData(bean, method));
 			}
 		}
 	}
@@ -60,7 +60,7 @@ public class ConfigurationBeanFactoryMetaData implements BeanFactoryPostProcesso
 	public <A extends Annotation> Map<String, Object> getBeansWithFactoryAnnotation(
 			Class<A> type) {
 		Map<String, Object> result = new HashMap<String, Object>();
-		for (String name : this.beans.keySet()) {
+		for (String name : this.beansFactoryMetadata.keySet()) {
 			if (findFactoryAnnotation(name, type) != null) {
 				result.put(name, this.beanFactory.getBean(name));
 			}
@@ -68,25 +68,25 @@ public class ConfigurationBeanFactoryMetaData implements BeanFactoryPostProcesso
 		return result;
 	}
 
-	public <A extends Annotation> A findFactoryAnnotation(String beanName,
+	public <A extends Annotation> A findFactoryAnnotation(String beanName, // beanName表示由工厂生成的bean name
 			Class<A> type) {
 		Method method = findFactoryMethod(beanName);
-		return (method != null) ? AnnotationUtils.findAnnotation(method, type) : null;
+		return (method != null) ? AnnotationUtils.findAnnotation(method, type) : null; // 在该@Bean注解工厂方法上查找指定注解
 	}
 
 	private Method findFactoryMethod(String beanName) {
-		if (!this.beans.containsKey(beanName)) {
+		if (!this.beansFactoryMetadata.containsKey(beanName)) {
 			return null;
 		}
 		final AtomicReference<Method> found = new AtomicReference<Method>(null);
-		MetaData meta = this.beans.get(beanName);
-		final String factory = meta.getMethod();
-		Class<?> type = this.beanFactory.getType(meta.getBean());
+		FactoryMetaData factoryMetaData = this.beansFactoryMetadata.get(beanName);
+		final String factory = factoryMetaData.getMethod();
+		Class<?> type = this.beanFactory.getType(factoryMetaData.getBean()); // 工厂bean类型
 		ReflectionUtils.doWithMethods(type, new MethodCallback() {
 			@Override
 			public void doWith(Method method)
 					throws IllegalArgumentException, IllegalAccessException {
-				if (method.getName().equals(factory)) {
+				if (method.getName().equals(factory)) { // 判断工厂方法名是否相等
 					found.compareAndSet(null, method);
 				}
 			}
@@ -94,13 +94,13 @@ public class ConfigurationBeanFactoryMetaData implements BeanFactoryPostProcesso
 		return found.get();
 	}
 
-	private static class MetaData {
+	private static class FactoryMetaData {
 
-		private String bean;
+		private String bean; // 工厂bean
 
-		private String method;
+		private String method; // 工厂方法
 
-		MetaData(String bean, String method) {
+		FactoryMetaData(String bean, String method) {
 			this.bean = bean;
 			this.method = method;
 		}

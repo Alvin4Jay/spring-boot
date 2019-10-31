@@ -55,17 +55,17 @@ class OnResourceCondition extends SpringBootCondition {
 						+ "least one resource location");
 		List<String> missing = new ArrayList<String>();
 		for (String location : locations) {
-			String resource = context.getEnvironment().resolvePlaceholders(location);
+			String resource = context.getEnvironment().resolvePlaceholders(location); // 替换占位符
 			if (!loader.getResource(resource).exists()) {
-				missing.add(location);
+				missing.add(location); // 依次判断资源是否不存在
 			}
 		}
 		if (!missing.isEmpty()) {
-			return ConditionOutcome.noMatch(ConditionMessage
+			return ConditionOutcome.noMatch(ConditionMessage // 不匹配
 					.forCondition(ConditionalOnResource.class)
 					.didNotFind("resource", "resources").items(Style.QUOTE, missing));
 		}
-		return ConditionOutcome
+		return ConditionOutcome // 匹配
 				.match(ConditionMessage.forCondition(ConditionalOnResource.class)
 						.found("location", "locations").items(locations));
 	}

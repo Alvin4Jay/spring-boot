@@ -46,13 +46,13 @@ class OnWebApplicationCondition extends SpringBootCondition {
 		boolean required = metadata
 				.isAnnotated(ConditionalOnWebApplication.class.getName());
 		ConditionOutcome outcome = isWebApplication(context, metadata, required);
-		if (required && !outcome.isMatch()) {
-			return ConditionOutcome.noMatch(outcome.getConditionMessage());
+		if (required && !outcome.isMatch()) { // 需要是web应用上下文，但是不匹配
+			return ConditionOutcome.noMatch(outcome.getConditionMessage()); // 则返回不匹配
 		}
-		if (!required && outcome.isMatch()) {
-			return ConditionOutcome.noMatch(outcome.getConditionMessage());
+		if (!required && outcome.isMatch()) { // 不需要是web应用上下文，但是匹配
+			return ConditionOutcome.noMatch(outcome.getConditionMessage()); // 则返回不匹配
 		}
-		return ConditionOutcome.match(outcome.getConditionMessage());
+		return ConditionOutcome.match(outcome.getConditionMessage()); // 否则返回匹配
 	}
 
 	private ConditionOutcome isWebApplication(ConditionContext context,
@@ -60,16 +60,16 @@ class OnWebApplicationCondition extends SpringBootCondition {
 		ConditionMessage.Builder message = ConditionMessage.forCondition(
 				ConditionalOnWebApplication.class, required ? "(required)" : "");
 		if (!ClassUtils.isPresent(WEB_CONTEXT_CLASS, context.getClassLoader())) {
-			return ConditionOutcome
+			return ConditionOutcome // GenericWebApplicationContext不存在，条件不匹配
 					.noMatch(message.didNotFind("web application classes").atAll());
 		}
 		if (context.getBeanFactory() != null) {
 			String[] scopes = context.getBeanFactory().getRegisteredScopeNames();
-			if (ObjectUtils.containsElement(scopes, "session")) {
+			if (ObjectUtils.containsElement(scopes, "session")) { // 包含session scope，则匹配
 				return ConditionOutcome.match(message.foundExactly("'session' scope"));
 			}
 		}
-		if (context.getEnvironment() instanceof StandardServletEnvironment) {
+		if (context.getEnvironment() instanceof StandardServletEnvironment) { // 根据Environment类型判断
 			return ConditionOutcome
 					.match(message.foundExactly("StandardServletEnvironment"));
 		}

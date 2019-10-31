@@ -55,14 +55,14 @@ public class BackgroundPreinitializer
 	public void onApplicationEvent(SpringApplicationEvent event) {
 		if (event instanceof ApplicationEnvironmentPreparedEvent) {
 			if (preinitializationStarted.compareAndSet(false, true)) {
-				performPreinitialization();
+				performPreinitialization(); // 指定后台任务
 			}
 		}
 		if ((event instanceof ApplicationReadyEvent
 				|| event instanceof ApplicationFailedEvent)
 				&& preinitializationStarted.get()) {
 			try {
-				preinitializationComplete.await();
+				preinitializationComplete.await(); // 等待后台任务完成
 			}
 			catch (InterruptedException ex) {
 				Thread.currentThread().interrupt();

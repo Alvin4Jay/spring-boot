@@ -56,6 +56,8 @@ class OnClassCondition extends SpringBootCondition
 
 	private ClassLoader beanClassLoader;
 
+	// -------AutoConfigurationImportFilter接口实现----------
+
 	@Override
 	public boolean[] match(String[] autoConfigurationClasses,
 			AutoConfigurationMetadata autoConfigurationMetadata) {
@@ -69,13 +71,14 @@ class OnClassCondition extends SpringBootCondition
 				logOutcome(autoConfigurationClasses[i], outcomes[i]); // 输出trace日志
 				if (report != null) {
 					report.recordConditionEvaluation(autoConfigurationClasses[i], this,
-							outcomes[i]); //记录
+							outcomes[i]); // 记录匹配结果
 				}
 			}
 		}
 		return match;
 	}
 
+	// 从BeanFactory获取ConditionEvaluationReport
 	private ConditionEvaluationReport getConditionEvaluationReport() {
 		if (this.beanFactory != null
 				&& this.beanFactory instanceof ConfigurableBeanFactory) {
@@ -89,17 +92,17 @@ class OnClassCondition extends SpringBootCondition
 			AutoConfigurationMetadata autoConfigurationMetadata) {
 		// Split the work and perform half in a background thread. Using a single
 		// additional thread seems to offer the best performance. More threads make
-		// things worse
+		// things worse 一半解析在另一个线程执行
 		int split = autoConfigurationClasses.length / 2;
 		OutcomesResolver firstHalfResolver = createOutcomesResolver(
-				autoConfigurationClasses, 0, split, autoConfigurationMetadata);  // 创建解析器
-		OutcomesResolver secondHalfResolver = new StandardOutcomesResolver(
+				autoConfigurationClasses, 0, split, autoConfigurationMetadata);  // 创建解析器(异步解析)
+		OutcomesResolver secondHalfResolver = new StandardOutcomesResolver( // 创建解析器(同步解析)
 				autoConfigurationClasses, split, autoConfigurationClasses.length,
 				autoConfigurationMetadata, this.beanClassLoader);
 		ConditionOutcome[] secondHalf = secondHalfResolver.resolveOutcomes();
 		ConditionOutcome[] firstHalf = firstHalfResolver.resolveOutcomes();
 		ConditionOutcome[] outcomes = new ConditionOutcome[autoConfigurationClasses.length];
-		System.arraycopy(firstHalf, 0, outcomes, 0, firstHalf.length);
+		System.arraycopy(firstHalf, 0, outcomes, 0, firstHalf.length); // 解析结果赋值
 		System.arraycopy(secondHalf, 0, outcomes, split, secondHalf.length);
 		return outcomes;
 	}
@@ -110,38 +113,40 @@ class OnClassCondition extends SpringBootCondition
 				autoConfigurationClasses, start, end, autoConfigurationMetadata,
 				this.beanClassLoader);
 		try {
-			return new ThreadedOutcomesResolver(outcomesResolver);
+			return new ThreadedOutcomesResolver(outcomesResolver); // 包装为ThreadedOutcomesResolver
 		}
 		catch (AccessControlException ex) {
 			return outcomesResolver;
 		}
 	}
 
+	// -------SpringBootCondition抽象类具体实现----------
+
 	@Override
 	public ConditionOutcome getMatchOutcome(ConditionContext context,
 			AnnotatedTypeMetadata metadata) {
 		ClassLoader classLoader = context.getClassLoader();
-		ConditionMessage matchMessage = ConditionMessage.empty();
-		List<String> onClasses = getCandidates(metadata, ConditionalOnClass.class);
+		ConditionMessage matchMessage = ConditionMessage.empty(); // 创建一个空ConditionMessage
+		List<String> onClasses = getCandidates(metadata, ConditionalOnClass.class); // 获取待检查存在的类
 		if (onClasses != null) {
 			List<String> missing = getMatches(onClasses, MatchType.MISSING, classLoader);
-			if (!missing.isEmpty()) {
-				return ConditionOutcome
+			if (!missing.isEmpty()) { // 某些依赖的类不存在
+				return ConditionOutcome // 不匹配
 						.noMatch(ConditionMessage.forCondition(ConditionalOnClass.class)
 								.didNotFind("required class", "required classes")
 								.items(Style.QUOTE, missing));
 			}
-			matchMessage = matchMessage.andCondition(ConditionalOnClass.class)
+			matchMessage = matchMessage.andCondition(ConditionalOnClass.class) // 匹配
 					.found("required class", "required classes").items(Style.QUOTE,
 							getMatches(onClasses, MatchType.PRESENT, classLoader));
 		}
-		List<String> onMissingClasses = getCandidates(metadata,
+		List<String> onMissingClasses = getCandidates(metadata,  // 获取待检查不存在的类
 				ConditionalOnMissingClass.class);
 		if (onMissingClasses != null) {
 			List<String> present = getMatches(onMissingClasses, MatchType.PRESENT,
 					classLoader);
-			if (!present.isEmpty()) {
-				return ConditionOutcome.noMatch(
+			if (!present.isEmpty()) { // 某些不需要的类存在
+				return ConditionOutcome.noMatch( // 不匹配
 						ConditionMessage.forCondition(ConditionalOnMissingClass.class)
 								.found("unwanted class", "unwanted classes")
 								.items(Style.QUOTE, present));
@@ -150,7 +155,7 @@ class OnClassCondition extends SpringBootCondition
 					.didNotFind("unwanted class", "unwanted classes").items(Style.QUOTE,
 							getMatches(onMissingClasses, MatchType.MISSING, classLoader));
 		}
-		return ConditionOutcome.match(matchMessage);
+		return ConditionOutcome.match(matchMessage); // 匹配
 	}
 
 	private List<String> getCandidates(AnnotatedTypeMetadata metadata,
@@ -195,13 +200,14 @@ class OnClassCondition extends SpringBootCondition
 		this.beanClassLoader = classLoader;
 	}
 
+	// 匹配类型
 	private enum MatchType {
 		// 存在
 		PRESENT {
 
 			@Override
 			public boolean matches(String className, ClassLoader classLoader) {
-				return isPresent(className, classLoader);
+				return isPresent(className, classLoader); // 判断类存在
 			}
 
 		},
@@ -210,7 +216,7 @@ class OnClassCondition extends SpringBootCondition
 
 			@Override
 			public boolean matches(String className, ClassLoader classLoader) {
-				return !isPresent(className, classLoader);
+				return !isPresent(className, classLoader); // 判断类不存在
 			}
 
 		};
@@ -220,7 +226,7 @@ class OnClassCondition extends SpringBootCondition
 				classLoader = ClassUtils.getDefaultClassLoader();
 			}
 			try {
-				forName(className, classLoader);
+				forName(className, classLoader); // 类加载
 				return true;
 			}
 			catch (Throwable ex) {
@@ -231,7 +237,7 @@ class OnClassCondition extends SpringBootCondition
 		private static Class<?> forName(String className, ClassLoader classLoader)
 				throws ClassNotFoundException {
 			if (classLoader != null) {
-				return classLoader.loadClass(className);
+				return classLoader.loadClass(className); // 类加载
 			}
 			return Class.forName(className);
 		}
@@ -262,18 +268,18 @@ class OnClassCondition extends SpringBootCondition
 				}
 
 			});
-			this.thread.start();
+			this.thread.start(); // 多线程解析
 		}
 
 		@Override
 		public ConditionOutcome[] resolveOutcomes() {
 			try {
-				this.thread.join();
+				this.thread.join(); // 等待异步线程解析完毕
 			}
 			catch (InterruptedException ex) {
 				Thread.currentThread().interrupt();
 			}
-			return this.outcomes;
+			return this.outcomes; // 解析完毕，返回解析结果
 		}
 
 	}
@@ -310,11 +316,11 @@ class OnClassCondition extends SpringBootCondition
 				int start, int end, AutoConfigurationMetadata autoConfigurationMetadata) {
 			ConditionOutcome[] outcomes = new ConditionOutcome[end - start];
 			for (int i = start; i < end; i++) { // 不包含end
-				String autoConfigurationClass = autoConfigurationClasses[i];
-				Set<String> candidates = autoConfigurationMetadata
+				String autoConfigurationClass = autoConfigurationClasses[i]; // 自动配置类
+				Set<String> candidates = autoConfigurationMetadata // 获取当前配置类的@ConditionalOnClass注解的值
 						.getSet(autoConfigurationClass, "ConditionalOnClass");
 				if (candidates != null) {
-					outcomes[i - start] = getOutcome(candidates); // 检查依赖的类是否存在
+					outcomes[i - start] = getOutcome(candidates); // 检查@ConditionalOnClass注解指定的类是否存在
 				}
 			}
 			return outcomes;

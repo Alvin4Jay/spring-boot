@@ -40,10 +40,10 @@ class OnExpressionCondition extends SpringBootCondition {
 			AnnotatedTypeMetadata metadata) {
 		String expression = (String) metadata
 				.getAnnotationAttributes(ConditionalOnExpression.class.getName())
-				.get("value");
-		expression = wrapIfNecessary(expression);
+				.get("value"); // SpEL表达式
+		expression = wrapIfNecessary(expression); // #{xxx}
 		String rawExpression = expression;
-		expression = context.getEnvironment().resolvePlaceholders(expression);
+		expression = context.getEnvironment().resolvePlaceholders(expression); // 占位符替换
 		ConditionMessage.Builder messageBuilder = ConditionMessage
 				.forCondition(ConditionalOnExpression.class, "(" + rawExpression + ")");
 		ConfigurableListableBeanFactory beanFactory = context.getBeanFactory();
@@ -52,7 +52,7 @@ class OnExpressionCondition extends SpringBootCondition {
 			return new ConditionOutcome(result, messageBuilder.resultedIn(result));
 		}
 		else {
-			return ConditionOutcome
+			return ConditionOutcome // beanFactory为null，则直接不匹配
 					.noMatch(messageBuilder.because("no BeanFactory available."));
 		}
 	}
@@ -69,7 +69,7 @@ class OnExpressionCondition extends SpringBootCondition {
 	}
 
 	/**
-	 * Allow user to provide bare expression with no '#{}' wrapper.
+	 * Allow user to provide bare expression(裸表达式) with no '#{}' wrapper.
 	 * @param expression source expression
 	 * @return wrapped expression
 	 */

@@ -67,7 +67,7 @@ import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 /**
  * {@link BeanPostProcessor} to bind {@link PropertySources} to beans annotated with
- * {@link ConfigurationProperties}.
+ * {@link ConfigurationProperties}. @ConfigurationProperties注解的Bean属性绑定后置处理器
  *
  * @author Dave Syer
  * @author Phillip Webb
@@ -90,6 +90,7 @@ public class ConfigurationPropertiesBindingPostProcessor implements BeanPostProc
 	private static final Log logger = LogFactory
 			.getLog(ConfigurationPropertiesBindingPostProcessor.class);
 
+	// 注入ConfigurationBeanFactoryMetaData Bean引用
 	private ConfigurationBeanFactoryMetaData beans = new ConfigurationBeanFactoryMetaData();
 
 	private PropertySources propertySources;
@@ -119,7 +120,7 @@ public class ConfigurationPropertiesBindingPostProcessor implements BeanPostProc
 	 * properties for binding.
 	 * @param converters the converters to set
 	 */
-	@Autowired(required = false)
+	@Autowired(required = false) // 注入@ConfigurationPropertiesBinding注解标识的Converters
 	@ConfigurationPropertiesBinding
 	public void setConverters(List<Converter<?, ?>> converters) {
 		this.converters = converters;
@@ -131,7 +132,7 @@ public class ConfigurationPropertiesBindingPostProcessor implements BeanPostProc
 	 * @param converters the converters to set
 	 */
 	@Autowired(required = false)
-	@ConfigurationPropertiesBinding
+	@ConfigurationPropertiesBinding  // 注入@ConfigurationPropertiesBinding注解标识的GenericConverters
 	public void setGenericConverters(List<GenericConverter> converters) {
 		this.genericConverters = converters;
 	}
@@ -165,7 +166,7 @@ public class ConfigurationPropertiesBindingPostProcessor implements BeanPostProc
 	 * Set the bean validator used to validate property fields.
 	 * @param validator the validator
 	 */
-	public void setValidator(Validator validator) {
+	public void setValidator(Validator validator) { // 验证
 		this.validator = validator;
 	}
 
@@ -173,12 +174,12 @@ public class ConfigurationPropertiesBindingPostProcessor implements BeanPostProc
 	 * Set the conversion service used to convert property values.
 	 * @param conversionService the conversion service
 	 */
-	public void setConversionService(ConversionService conversionService) {
+	public void setConversionService(ConversionService conversionService) { // 转换
 		this.conversionService = conversionService;
 	}
 
 	/**
-	 * Set the bean meta-data store.
+	 * Set the bean meta-data store. 依赖注入ConfigurationBeanFactoryMetaData bean
 	 * @param beans the bean meta data store
 	 */
 	public void setBeanMetaDataStore(ConfigurationBeanFactoryMetaData beans) {
@@ -203,7 +204,7 @@ public class ConfigurationPropertiesBindingPostProcessor implements BeanPostProc
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		if (this.propertySources == null) {
-			this.propertySources = deducePropertySources();
+			this.propertySources = deducePropertySources(); // 获取属性源s
 		}
 		if (this.validator == null) {
 			this.validator = getOptionalBean(VALIDATOR_BEAN_NAME, Validator.class);
@@ -216,7 +217,7 @@ public class ConfigurationPropertiesBindingPostProcessor implements BeanPostProc
 	}
 
 	@Override
-	public void onApplicationEvent(ContextRefreshedEvent event) {
+	public void onApplicationEvent(ContextRefreshedEvent event) { // 应用上下文刷新完成时回调
 		freeLocalValidator();
 	}
 
@@ -238,7 +239,7 @@ public class ConfigurationPropertiesBindingPostProcessor implements BeanPostProc
 		}
 	}
 
-	private PropertySources deducePropertySources() {
+	private PropertySources deducePropertySources() { // 推断PropertySources
 		PropertySourcesPlaceholderConfigurer configurer = getSinglePropertySourcesPlaceholderConfigurer();
 		if (configurer != null) {
 			// Flatten the sources into a single list so they can be iterated
@@ -287,10 +288,11 @@ public class ConfigurationPropertiesBindingPostProcessor implements BeanPostProc
 	public Object postProcessBeforeInitialization(Object bean, String beanName)
 			throws BeansException {
 		ConfigurationProperties annotation = AnnotationUtils
-				.findAnnotation(bean.getClass(), ConfigurationProperties.class);
+				.findAnnotation(bean.getClass(), ConfigurationProperties.class); // 获取类上标注的@ConfigurationProperties注解
 		if (annotation != null) {
 			postProcessBeforeInitialization(bean, beanName, annotation);
 		}
+		// 获取生成名为beanName Bean的工厂@Bean注解方法上的@ConfigurationProperties注解实例
 		annotation = this.beans.findFactoryAnnotation(beanName,
 				ConfigurationProperties.class);
 		if (annotation != null) {
@@ -311,9 +313,9 @@ public class ConfigurationPropertiesBindingPostProcessor implements BeanPostProc
 		Object target = bean;
 		PropertiesConfigurationFactory<Object> factory = new PropertiesConfigurationFactory<Object>(
 				target);
-		factory.setPropertySources(this.propertySources);
+		factory.setPropertySources(this.propertySources); // PropertiesConfigurationFactory配置
 		factory.setApplicationContext(this.applicationContext);
-		factory.setValidator(determineValidator(bean));
+		factory.setValidator(determineValidator(bean)); // 确定Validator
 		// If no explicit conversion service is provided we add one so that (at least)
 		// comma-separated arrays of convertibles can be bound automatically
 		factory.setConversionService((this.conversionService != null)
@@ -324,11 +326,11 @@ public class ConfigurationPropertiesBindingPostProcessor implements BeanPostProc
 			factory.setExceptionIfInvalid(annotation.exceptionIfInvalid());
 			factory.setIgnoreNestedProperties(annotation.ignoreNestedProperties());
 			if (StringUtils.hasLength(annotation.prefix())) {
-				factory.setTargetName(annotation.prefix());
+				factory.setTargetName(annotation.prefix()); // 设置前缀
 			}
 		}
 		try {
-			factory.bindPropertiesToTarget();
+			factory.bindPropertiesToTarget(); // bean属性
 		}
 		catch (Exception ex) {
 			String targetClass = ClassUtils.getShortName(target.getClass());
@@ -337,6 +339,7 @@ public class ConfigurationPropertiesBindingPostProcessor implements BeanPostProc
 		}
 	}
 
+	// @ConfigurationProperties 字符串表示
 	private String getAnnotationDetails(ConfigurationProperties annotation) {
 		if (annotation == null) {
 			return "";
@@ -350,10 +353,11 @@ public class ConfigurationPropertiesBindingPostProcessor implements BeanPostProc
 		return details.toString();
 	}
 
+	// 确定Validator
 	private Validator determineValidator(Object bean) {
 		Validator validator = getValidator();
 		boolean supportsBean = (validator != null && validator.supports(bean.getClass()));
-		if (ClassUtils.isAssignable(Validator.class, bean.getClass())) {
+		if (ClassUtils.isAssignable(Validator.class, bean.getClass())) { // 本身是Validator实现？
 			if (supportsBean) {
 				return new ChainingValidator(validator, (Validator) bean);
 			}
@@ -380,7 +384,7 @@ public class ConfigurationPropertiesBindingPostProcessor implements BeanPostProc
 				return false;
 			}
 		}
-		return true;
+		return true; // 指定的类必须全部存在，才返回true；否则，返回false
 	}
 
 	private ConversionService getDefaultConversionService() {
@@ -419,7 +423,7 @@ public class ConfigurationPropertiesBindingPostProcessor implements BeanPostProc
 			if (!super.supports(type)) {
 				return false;
 			}
-			if (AnnotatedElementUtils.hasAnnotation(type, Validated.class)) {
+			if (AnnotatedElementUtils.hasAnnotation(type, Validated.class)) { // 类上带有@Validated注解，则验证
 				return true;
 			}
 			if (type.getPackage() != null && type.getPackage().getName()
@@ -438,7 +442,7 @@ public class ConfigurationPropertiesBindingPostProcessor implements BeanPostProc
 
 	/**
 	 * {@link Validator} implementation that wraps {@link Validator} instances and chains
-	 * their execution.
+	 * their execution. 多个Validator同时验证
 	 */
 	private static class ChainingValidator implements Validator {
 
@@ -484,7 +488,7 @@ public class ConfigurationPropertiesBindingPostProcessor implements BeanPostProc
 
 		@Override
 		public Iterator<PropertySource<?>> iterator() {
-			MutablePropertySources result = getFlattened();
+			MutablePropertySources result = getFlattened(); // 获取所有的属性源
 			return result.iterator();
 		}
 

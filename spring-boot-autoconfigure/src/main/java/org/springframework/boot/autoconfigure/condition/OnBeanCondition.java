@@ -66,58 +66,58 @@ class OnBeanCondition extends SpringBootCondition implements ConfigurationCondit
 
 	@Override
 	public ConfigurationPhase getConfigurationPhase() {
-		return ConfigurationPhase.REGISTER_BEAN;
+		return ConfigurationPhase.REGISTER_BEAN; // 表示此OnBeanCondition生效阶段
 	}
 
 	@Override
 	public ConditionOutcome getMatchOutcome(ConditionContext context,
 			AnnotatedTypeMetadata metadata) {
-		ConditionMessage matchMessage = ConditionMessage.empty();
+		ConditionMessage matchMessage = ConditionMessage.empty(); // 创建一个空message
 		if (metadata.isAnnotated(ConditionalOnBean.class.getName())) {
 			BeanSearchSpec spec = new BeanSearchSpec(context, metadata,
 					ConditionalOnBean.class);
 			List<String> matching = getMatchingBeans(context, spec);
-			if (matching.isEmpty()) {
+			if (matching.isEmpty()) { // 为空，不匹配
 				return ConditionOutcome.noMatch(
 						ConditionMessage.forCondition(ConditionalOnBean.class, spec)
-								.didNotFind("any beans").atAll());
+								.didNotFind("any beans").atAll()); // @ConditionalOnBean为任一匹配即可
 			}
-			matchMessage = matchMessage.andCondition(ConditionalOnBean.class, spec)
+			matchMessage = matchMessage.andCondition(ConditionalOnBean.class, spec) // ok
 					.found("bean", "beans").items(Style.QUOTE, matching);
 		}
 		if (metadata.isAnnotated(ConditionalOnSingleCandidate.class.getName())) {
 			BeanSearchSpec spec = new SingleCandidateBeanSearchSpec(context, metadata,
 					ConditionalOnSingleCandidate.class);
 			List<String> matching = getMatchingBeans(context, spec);
-			if (matching.isEmpty()) {
+			if (matching.isEmpty()) { // 为空，不匹配
 				return ConditionOutcome.noMatch(ConditionMessage
 						.forCondition(ConditionalOnSingleCandidate.class, spec)
 						.didNotFind("any beans").atAll());
 			}
-			else if (!hasSingleAutowireCandidate(context.getBeanFactory(), matching,
+			else if (!hasSingleAutowireCandidate(context.getBeanFactory(), matching, // 检查多个bean候选时，是否只有一个是primary
 					spec.getStrategy() == SearchStrategy.ALL)) {
-				return ConditionOutcome.noMatch(ConditionMessage
+				return ConditionOutcome.noMatch(ConditionMessage // 不匹配
 						.forCondition(ConditionalOnSingleCandidate.class, spec)
 						.didNotFind("a primary bean from beans")
 						.items(Style.QUOTE, matching));
 			}
 			matchMessage = matchMessage
-					.andCondition(ConditionalOnSingleCandidate.class, spec)
+					.andCondition(ConditionalOnSingleCandidate.class, spec) // ok
 					.found("a primary bean from beans").items(Style.QUOTE, matching);
 		}
 		if (metadata.isAnnotated(ConditionalOnMissingBean.class.getName())) {
 			BeanSearchSpec spec = new BeanSearchSpec(context, metadata,
 					ConditionalOnMissingBean.class);
 			List<String> matching = getMatchingBeans(context, spec);
-			if (!matching.isEmpty()) {
+			if (!matching.isEmpty()) { // 不为空，不匹配
 				return ConditionOutcome.noMatch(ConditionMessage
 						.forCondition(ConditionalOnMissingBean.class, spec)
 						.found("bean", "beans").items(Style.QUOTE, matching));
 			}
 			matchMessage = matchMessage.andCondition(ConditionalOnMissingBean.class, spec)
-					.didNotFind("any beans").atAll();
+					.didNotFind("any beans").atAll(); // ok
 		}
-		return ConditionOutcome.match(matchMessage);
+		return ConditionOutcome.match(matchMessage); // 返回匹配
 	}
 
 	@SuppressWarnings("deprecation")
@@ -125,7 +125,7 @@ class OnBeanCondition extends SpringBootCondition implements ConfigurationCondit
 			BeanSearchSpec beans) {
 		ConfigurableListableBeanFactory beanFactory = context.getBeanFactory();
 		if (beans.getStrategy() == SearchStrategy.PARENTS
-				|| beans.getStrategy() == SearchStrategy.ANCESTORS) {
+				|| beans.getStrategy() == SearchStrategy.ANCESTORS) { // 在父BeanFactory中搜索
 			BeanFactory parent = beanFactory.getParentBeanFactory();
 			Assert.isInstanceOf(ConfigurableListableBeanFactory.class, parent,
 					"Unable to use SearchStrategy.PARENTS");
@@ -135,20 +135,20 @@ class OnBeanCondition extends SpringBootCondition implements ConfigurationCondit
 			return Collections.emptyList();
 		}
 		List<String> beanNames = new ArrayList<String>();
-		boolean considerHierarchy = beans.getStrategy() != SearchStrategy.CURRENT;
+		boolean considerHierarchy = beans.getStrategy() != SearchStrategy.CURRENT; // 是否考虑继承
 		for (String type : beans.getTypes()) {
-			beanNames.addAll(getBeanNamesForType(beanFactory, type,
+			beanNames.addAll(getBeanNamesForType(beanFactory, type, // type() value() 添加
 					context.getClassLoader(), considerHierarchy));
 		}
 		for (String ignoredType : beans.getIgnoredTypes()) {
-			beanNames.removeAll(getBeanNamesForType(beanFactory, ignoredType,
+			beanNames.removeAll(getBeanNamesForType(beanFactory, ignoredType, // ignored() 移除
 					context.getClassLoader(), considerHierarchy));
 		}
 		for (String annotation : beans.getAnnotations()) {
-			beanNames.addAll(Arrays.asList(getBeanNamesForAnnotation(beanFactory,
+			beanNames.addAll(Arrays.asList(getBeanNamesForAnnotation(beanFactory, // annotation() 添加
 					annotation, context.getClassLoader(), considerHierarchy)));
 		}
-		for (String beanName : beans.getNames()) {
+		for (String beanName : beans.getNames()) { // name() 添加
 			if (containsBean(beanFactory, beanName, considerHierarchy)) {
 				beanNames.add(beanName);
 			}
@@ -159,9 +159,9 @@ class OnBeanCondition extends SpringBootCondition implements ConfigurationCondit
 	private boolean containsBean(ConfigurableListableBeanFactory beanFactory,
 			String beanName, boolean considerHierarchy) {
 		if (considerHierarchy) {
-			return beanFactory.containsBean(beanName);
+			return beanFactory.containsBean(beanName); // 考虑BeanFactory继承
 		}
-		return beanFactory.containsLocalBean(beanName);
+		return beanFactory.containsLocalBean(beanName); // 本BeanFactory获取
 	}
 
 	private Collection<String> getBeanNamesForType(ListableBeanFactory beanFactory,
@@ -183,25 +183,25 @@ class OnBeanCondition extends SpringBootCondition implements ConfigurationCondit
 
 	private void collectBeanNamesForType(Set<String> result,
 			ListableBeanFactory beanFactory, Class<?> type, boolean considerHierarchy) {
-		result.addAll(BeanTypeRegistry.get(beanFactory).getNamesForType(type));
+		result.addAll(BeanTypeRegistry.get(beanFactory).getNamesForType(type)); // 根据类型获取bean names
 		if (considerHierarchy && beanFactory instanceof HierarchicalBeanFactory) {
 			BeanFactory parent = ((HierarchicalBeanFactory) beanFactory)
 					.getParentBeanFactory();
 			if (parent instanceof ListableBeanFactory) {
 				collectBeanNamesForType(result, (ListableBeanFactory) parent, type,
-						considerHierarchy);
+						considerHierarchy); // 从父类获取bean names
 			}
 		}
 	}
 
 	private String[] getBeanNamesForAnnotation(
-			ConfigurableListableBeanFactory beanFactory, String type,
+			ConfigurableListableBeanFactory beanFactory, String type, // type注解类型
 			ClassLoader classLoader, boolean considerHierarchy) throws LinkageError {
 		Set<String> names = new HashSet<String>();
 		try {
 			@SuppressWarnings("unchecked")
 			Class<? extends Annotation> annotationType = (Class<? extends Annotation>) ClassUtils
-					.forName(type, classLoader);
+					.forName(type, classLoader); // 注解
 			collectBeanNamesForAnnotation(names, beanFactory, annotationType,
 					considerHierarchy);
 		}
@@ -215,13 +215,13 @@ class OnBeanCondition extends SpringBootCondition implements ConfigurationCondit
 			ListableBeanFactory beanFactory, Class<? extends Annotation> annotationType,
 			boolean considerHierarchy) {
 		names.addAll(
-				BeanTypeRegistry.get(beanFactory).getNamesForAnnotation(annotationType));
+				BeanTypeRegistry.get(beanFactory).getNamesForAnnotation(annotationType)); // 根据注解获取bean names
 		if (considerHierarchy) {
 			BeanFactory parent = ((HierarchicalBeanFactory) beanFactory)
 					.getParentBeanFactory();
 			if (parent instanceof ListableBeanFactory) {
 				collectBeanNamesForAnnotation(names, (ListableBeanFactory) parent,
-						annotationType, considerHierarchy);
+						annotationType, considerHierarchy); // 从父BeanFactory获取
 			}
 		}
 	}
@@ -231,7 +231,7 @@ class OnBeanCondition extends SpringBootCondition implements ConfigurationCondit
 			boolean considerHierarchy) {
 		return (beanNames.size() == 1
 				|| getPrimaryBeans(beanFactory, beanNames, considerHierarchy)
-						.size() == 1);
+						.size() == 1); // @Primary注解的候选bean只能是一个
 	}
 
 	private List<String> getPrimaryBeans(ConfigurableListableBeanFactory beanFactory,
@@ -240,7 +240,7 @@ class OnBeanCondition extends SpringBootCondition implements ConfigurationCondit
 		for (String beanName : beanNames) {
 			BeanDefinition beanDefinition = findBeanDefinition(beanFactory, beanName,
 					considerHierarchy);
-			if (beanDefinition != null && beanDefinition.isPrimary()) {
+			if (beanDefinition != null && beanDefinition.isPrimary()) { // @Primary注解的Bean
 				primaryBeans.add(beanName);
 			}
 		}
@@ -249,12 +249,12 @@ class OnBeanCondition extends SpringBootCondition implements ConfigurationCondit
 
 	private BeanDefinition findBeanDefinition(ConfigurableListableBeanFactory beanFactory,
 			String beanName, boolean considerHierarchy) {
-		if (beanFactory.containsBeanDefinition(beanName)) {
+		if (beanFactory.containsBeanDefinition(beanName)) { // 本BeanFactory内查找
 			return beanFactory.getBeanDefinition(beanName);
 		}
 		if (considerHierarchy && beanFactory
 				.getParentBeanFactory() instanceof ConfigurableListableBeanFactory) {
-			return findBeanDefinition(((ConfigurableListableBeanFactory) beanFactory
+			return findBeanDefinition(((ConfigurableListableBeanFactory) beanFactory // 递归查找父BeanFactory
 					.getParentBeanFactory()), beanName, considerHierarchy);
 		}
 		return null;
@@ -291,7 +291,7 @@ class OnBeanCondition extends SpringBootCondition implements ConfigurationCondit
 			BeanTypeDeductionException deductionException = null;
 			try {
 				if (this.types.isEmpty() && this.names.isEmpty()) {
-					addDeducedBeanType(context, metadata, this.types);
+					addDeducedBeanType(context, metadata, this.types); // 推断@Bean注解方法的bean类型
 				}
 			}
 			catch (BeanTypeDeductionException ex) {
@@ -342,7 +342,7 @@ class OnBeanCondition extends SpringBootCondition implements ConfigurationCondit
 
 		private void addDeducedBeanType(ConditionContext context,
 				AnnotatedTypeMetadata metadata, final List<String> beanTypes) {
-			if (metadata instanceof MethodMetadata
+			if (metadata instanceof MethodMetadata // 推断@Bean注解方法的类型
 					&& metadata.isAnnotated(Bean.class.getName())) {
 				addDeducedBeanTypeForBeanMethod(context, (MethodMetadata) metadata,
 						beanTypes);
@@ -355,7 +355,7 @@ class OnBeanCondition extends SpringBootCondition implements ConfigurationCondit
 				// We should be safe to load at this point since we are in the
 				// REGISTER_BEAN phase
 				Class<?> returnType = ClassUtils.forName(metadata.getReturnTypeName(),
-						context.getClassLoader());
+						context.getClassLoader()); // 类加载
 				beanTypes.add(returnType.getName());
 			}
 			catch (Throwable ex) {
@@ -424,7 +424,7 @@ class OnBeanCondition extends SpringBootCondition implements ConfigurationCondit
 		@Override
 		protected void validate(BeanTypeDeductionException ex) {
 			Assert.isTrue(getTypes().size() == 1, annotationName() + " annotations must "
-					+ "specify only one type (got " + getTypes() + ")");
+					+ "specify only one type (got " + getTypes() + ")"); // 指定的类型只能是一个
 		}
 
 	}

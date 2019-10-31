@@ -51,7 +51,7 @@ public class EventPublishingRunListener implements SpringApplicationRunListener,
 	public EventPublishingRunListener(SpringApplication application, String[] args) {
 		this.application = application;
 		this.args = args;
-		this.initialMulticaster = new SimpleApplicationEventMulticaster();
+		this.initialMulticaster = new SimpleApplicationEventMulticaster(); // 实际的事件发布器
 		for (ApplicationListener<?> listener : application.getListeners()) {
 			this.initialMulticaster.addApplicationListener(listener);
 		}
@@ -65,12 +65,12 @@ public class EventPublishingRunListener implements SpringApplicationRunListener,
 	@Override
 	@SuppressWarnings("deprecation")
 	public void starting() {
-		this.initialMulticaster
+		this.initialMulticaster // 使用ApplicationStartingEvent，应用启动
 				.multicastEvent(new ApplicationStartedEvent(this.application, this.args));
 	}
 
 	@Override
-	public void environmentPrepared(ConfigurableEnvironment environment) {
+	public void environmentPrepared(ConfigurableEnvironment environment) { // 环境准备完毕
 		this.initialMulticaster.multicastEvent(new ApplicationEnvironmentPreparedEvent(
 				this.application, this.args, environment));
 	}
@@ -88,7 +88,7 @@ public class EventPublishingRunListener implements SpringApplicationRunListener,
 			}
 			context.addApplicationListener(listener); // 注册ApplicationListener到上下文context
 		}
-		this.initialMulticaster.multicastEvent(
+		this.initialMulticaster.multicastEvent( // 还是由当前的initialMulticaster发布事件
 				new ApplicationPreparedEvent(this.application, this.args, context));
 	}
 
@@ -98,7 +98,7 @@ public class EventPublishingRunListener implements SpringApplicationRunListener,
 		if (context != null && context.isActive()) {
 			// Listeners have been registered to the application context so we should
 			// use it at this point if we can
-			context.publishEvent(event); // 发送ApplicationReadyEvent、ApplicationFailedEvent事件
+			context.publishEvent(event); // context ready，直接由context发送ApplicationReadyEvent、ApplicationFailedEvent事件
 		}
 		else {
 			// An inactive context may not have a multicaster so we use our multicaster to
@@ -110,9 +110,10 @@ public class EventPublishingRunListener implements SpringApplicationRunListener,
 				}
 			}
 			if (event instanceof ApplicationFailedEvent) {
+				// 在调用ApplicationListener的回调方法时如果出现异常，由该ErrorHandler处理
 				this.initialMulticaster.setErrorHandler(new LoggingErrorHandler());
 			}
-			this.initialMulticaster.multicastEvent(event);
+			this.initialMulticaster.multicastEvent(event); // 如果context未激活，则使用当前的initialMulticaster发布事件
 		}
 	}
 

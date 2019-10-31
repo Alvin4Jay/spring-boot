@@ -66,26 +66,26 @@ public final class FailureAnalyzers {
 	FailureAnalyzers(ConfigurableApplicationContext context, ClassLoader classLoader) {
 		Assert.notNull(context, "Context must not be null");
 		this.classLoader = (classLoader != null) ? classLoader : context.getClassLoader();
-		this.analyzers = loadFailureAnalyzers(this.classLoader);
+		this.analyzers = loadFailureAnalyzers(this.classLoader); // 查找FailureAnalyzer
 		prepareFailureAnalyzers(this.analyzers, context);
 	}
 
 	private List<FailureAnalyzer> loadFailureAnalyzers(ClassLoader classLoader) {
 		List<String> analyzerNames = SpringFactoriesLoader
-				.loadFactoryNames(FailureAnalyzer.class, classLoader);
+				.loadFactoryNames(FailureAnalyzer.class, classLoader); // 查找FailureAnalyzer
 		List<FailureAnalyzer> analyzers = new ArrayList<FailureAnalyzer>();
 		for (String analyzerName : analyzerNames) {
 			try {
 				Constructor<?> constructor = ClassUtils.forName(analyzerName, classLoader)
 						.getDeclaredConstructor();
 				ReflectionUtils.makeAccessible(constructor);
-				analyzers.add((FailureAnalyzer) constructor.newInstance());
+				analyzers.add((FailureAnalyzer) constructor.newInstance()); // 实例化
 			}
 			catch (Throwable ex) {
 				logger.trace("Failed to load " + analyzerName, ex);
 			}
 		}
-		AnnotationAwareOrderComparator.sort(analyzers);
+		AnnotationAwareOrderComparator.sort(analyzers); // 排序
 		return analyzers;
 	}
 
@@ -98,7 +98,7 @@ public final class FailureAnalyzers {
 
 	private void prepareAnalyzer(ConfigurableApplicationContext context,
 			FailureAnalyzer analyzer) {
-		if (analyzer instanceof BeanFactoryAware) {
+		if (analyzer instanceof BeanFactoryAware) { // 注入BeanFactory引用
 			((BeanFactoryAware) analyzer).setBeanFactory(context.getBeanFactory());
 		}
 	}
@@ -130,12 +130,12 @@ public final class FailureAnalyzers {
 
 	private boolean report(FailureAnalysis analysis, ClassLoader classLoader) {
 		List<FailureAnalysisReporter> reporters = SpringFactoriesLoader
-				.loadFactories(FailureAnalysisReporter.class, classLoader);
+				.loadFactories(FailureAnalysisReporter.class, classLoader); // 加载FailureAnalysisReporter
 		if (analysis == null || reporters.isEmpty()) {
 			return false;
 		}
 		for (FailureAnalysisReporter reporter : reporters) {
-			reporter.report(analysis);
+			reporter.report(analysis); // 输出分析日志
 		}
 		return true;
 	}

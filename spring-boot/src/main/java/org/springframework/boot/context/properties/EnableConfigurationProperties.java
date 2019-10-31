@@ -44,6 +44,6 @@ public @interface EnableConfigurationProperties {
 	 * with Spring. Standard Spring Beans will also be scanned regardless of this value.
 	 * @return {@link ConfigurationProperties} annotated beans to register
 	 */
-	Class<?>[] value() default {};
+	Class<?>[] value() default {}; // @ConfigurationProperties注解的Bean类型
 
 }

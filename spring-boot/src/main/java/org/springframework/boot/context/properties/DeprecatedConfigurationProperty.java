@@ -35,7 +35,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-public @interface DeprecatedConfigurationProperty {
+public @interface DeprecatedConfigurationProperty { // 用于getter方法，表示元素被废弃
 
 	/**
 	 * The reason for the deprecation.

@@ -48,7 +48,7 @@ public @interface ConfigurationProperties {
 	 * @return the name prefix of the properties to bind
 	 */
 	@AliasFor("prefix")
-	String value() default "";
+	String value() default ""; // 属性前缀
 
 	/**
 	 * The name prefix of the properties that are valid to bind to this object. Synonym
@@ -56,29 +56,29 @@ public @interface ConfigurationProperties {
 	 * @return the name prefix of the properties to bind
 	 */
 	@AliasFor("value")
-	String prefix() default "";
+	String prefix() default ""; // 属性前缀
 
 	/**
-	 * Flag to indicate that when binding to this object invalid fields should be ignored.
+	 * Flag to indicate that when binding to this object, invalid fields should be ignored.
 	 * Invalid means invalid according to the binder that is used, and usually this means
 	 * fields of the wrong type (or that cannot be coerced into the correct type).
 	 * @return the flag value (default false)
 	 */
-	boolean ignoreInvalidFields() default false;
+	boolean ignoreInvalidFields() default false; // 配置的属性值类型错误，是否忽略
 
 	/**
-	 * Flag to indicate that when binding to this object fields with periods in their
+	 * Flag to indicate that when binding to this object, fields with periods(点号) in their
 	 * names should be ignored.
 	 * @return the flag value (default false)
 	 */
 	boolean ignoreNestedProperties() default false;
 
 	/**
-	 * Flag to indicate that when binding to this object unknown fields should be ignored.
+	 * Flag to indicate that when binding to this object, unknown fields should be ignored.
 	 * An unknown field could be a sign of a mistake in the Properties.
 	 * @return the flag value (default true)
 	 */
-	boolean ignoreUnknownFields() default true;
+	boolean ignoreUnknownFields() default true; // 配置的属性与值在绑定的类上不存在，是否忽略
 
 	/**
 	 * Flag to indicate that an exception should be raised if a Validator is available,

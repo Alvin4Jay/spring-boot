@@ -36,10 +36,10 @@ public final class LoggingFailureAnalysisReporter implements FailureAnalysisRepo
 	public void report(FailureAnalysis failureAnalysis) {
 		if (logger.isDebugEnabled()) {
 			logger.debug("Application failed to start due to an exception",
-					failureAnalysis.getCause());
+					failureAnalysis.getCause()); // 输出debug信息
 		}
 		if (logger.isErrorEnabled()) {
-			logger.error(buildMessage(failureAnalysis));
+			logger.error(buildMessage(failureAnalysis)); // 输出error信息
 		}
 	}
 

@@ -42,12 +42,12 @@ public abstract class SpringBootCondition implements Condition {
 	@Override
 	public final boolean matches(ConditionContext context,
 			AnnotatedTypeMetadata metadata) {
-		String classOrMethodName = getClassOrMethodName(metadata);
+		String classOrMethodName = getClassOrMethodName(metadata); // @ConditionalOnXXX注解标注的类名/方法名
 		try {
-			ConditionOutcome outcome = getMatchOutcome(context, metadata);
-			logOutcome(classOrMethodName, outcome);
+			ConditionOutcome outcome = getMatchOutcome(context, metadata); // 获取匹配结果
+			logOutcome(classOrMethodName, outcome); // 输出匹配结果的日志
 			recordEvaluation(context, classOrMethodName, outcome);
-			return outcome.isMatch();
+			return outcome.isMatch(); // 返回是否匹配
 		}
 		catch (NoClassDefFoundError ex) {
 			throw new IllegalStateException(
@@ -67,26 +67,28 @@ public abstract class SpringBootCondition implements Condition {
 
 	private String getName(AnnotatedTypeMetadata metadata) {
 		if (metadata instanceof AnnotationMetadata) {
-			return ((AnnotationMetadata) metadata).getClassName();
+			return ((AnnotationMetadata) metadata).getClassName(); // 类名
 		}
 		if (metadata instanceof MethodMetadata) {
 			MethodMetadata methodMetadata = (MethodMetadata) metadata;
 			return methodMetadata.getDeclaringClassName() + "."
-					+ methodMetadata.getMethodName();
+					+ methodMetadata.getMethodName(); // 类名+方法名
 		}
 		return metadata.toString();
 	}
 
+	// 获取类名或方法名
 	private static String getClassOrMethodName(AnnotatedTypeMetadata metadata) {
 		if (metadata instanceof ClassMetadata) {
 			ClassMetadata classMetadata = (ClassMetadata) metadata;
-			return classMetadata.getClassName();
+			return classMetadata.getClassName(); // 类名
 		}
 		MethodMetadata methodMetadata = (MethodMetadata) metadata;
 		return methodMetadata.getDeclaringClassName() + "#"
-				+ methodMetadata.getMethodName();
+				+ methodMetadata.getMethodName(); // 全限定类型+方法名
 	}
 
+	// 输出匹配结果
 	protected final void logOutcome(String classOrMethodName, ConditionOutcome outcome) {
 		if (this.logger.isTraceEnabled()) {
 			this.logger.trace(getLogMessage(classOrMethodName, outcome));
@@ -97,7 +99,7 @@ public abstract class SpringBootCondition implements Condition {
 			ConditionOutcome outcome) {
 		StringBuilder message = new StringBuilder();
 		message.append("Condition ");
-		message.append(ClassUtils.getShortName(getClass()));
+		message.append(ClassUtils.getShortName(getClass())); // 条件简单类名
 		message.append(" on ");
 		message.append(classOrMethodName);
 		message.append(outcome.isMatch() ? " matched" : " did not match");
@@ -111,12 +113,14 @@ public abstract class SpringBootCondition implements Condition {
 	private void recordEvaluation(ConditionContext context, String classOrMethodName,
 			ConditionOutcome outcome) {
 		if (context.getBeanFactory() != null) {
-			ConditionEvaluationReport.get(context.getBeanFactory())
+			ConditionEvaluationReport.get(context.getBeanFactory()) // 记录条件评估结果
 					.recordConditionEvaluation(classOrMethodName, this, outcome);
 		}
 	}
 
 	/**
+	 * 获取匹配结果
+	 *
 	 * Determine the outcome of the match along with suitable log output.
 	 * @param context the condition context
 	 * @param metadata the annotation metadata

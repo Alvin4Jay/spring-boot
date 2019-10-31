@@ -239,6 +239,7 @@ public class PropertiesConfigurationFactory<T> implements FactoryBean<T>,
 		return this.target;
 	}
 
+	// 属性绑定
 	public void bindPropertiesToTarget() throws BindException {
 		Assert.state(this.propertySources != null, "PropertySources should not be null");
 		try {
@@ -262,7 +263,7 @@ public class PropertiesConfigurationFactory<T> implements FactoryBean<T>,
 	private void doBindPropertiesToTarget() throws BindException {
 		RelaxedDataBinder dataBinder = (this.targetName != null)
 				? new RelaxedDataBinder(this.target, this.targetName)
-				: new RelaxedDataBinder(this.target);
+				: new RelaxedDataBinder(this.target); // 松散数据绑定
 		if (this.validator != null
 				&& this.validator.supports(dataBinder.getTarget().getClass())) {
 			dataBinder.setValidator(this.validator);
@@ -278,17 +279,17 @@ public class PropertiesConfigurationFactory<T> implements FactoryBean<T>,
 		if (this.applicationContext != null) {
 			ResourceEditorRegistrar resourceEditorRegistrar = new ResourceEditorRegistrar(
 					this.applicationContext, this.applicationContext.getEnvironment());
-			resourceEditorRegistrar.registerCustomEditors(dataBinder);
+			resourceEditorRegistrar.registerCustomEditors(dataBinder); // 注册ResourceEditor
 		}
 		Iterable<String> relaxedTargetNames = getRelaxedTargetNames();
 		Set<String> names = getNames(relaxedTargetNames);
 		PropertyValues propertyValues = getPropertySourcesPropertyValues(names,
 				relaxedTargetNames);
-		dataBinder.bind(propertyValues);
+		dataBinder.bind(propertyValues); // 属性绑定
 		if (this.validator != null) {
-			dataBinder.validate();
+			dataBinder.validate(); // 验证属性值
 		}
-		checkForBindingErrors(dataBinder);
+		checkForBindingErrors(dataBinder); // 检查绑定错误
 	}
 
 	private Iterable<String> getRelaxedTargetNames() {
@@ -296,6 +297,7 @@ public class PropertiesConfigurationFactory<T> implements FactoryBean<T>,
 				? new RelaxedNames(this.targetName) : null;
 	}
 
+	// 获取组合之后(加上prefix)的属性名称
 	private Set<String> getNames(Iterable<String> prefixes) {
 		Set<String> names = new LinkedHashSet<String>();
 		if (this.target != null) {
@@ -313,8 +315,8 @@ public class PropertiesConfigurationFactory<T> implements FactoryBean<T>,
 					else {
 						for (String prefix : prefixes) {
 							for (String relaxedName : relaxedNames) {
-								names.add(prefix + "." + relaxedName);
-								names.add(prefix + "_" + relaxedName);
+								names.add(prefix + "." + relaxedName); // user.homeName
+								names.add(prefix + "_" + relaxedName); // user_homeName
 							}
 						}
 					}

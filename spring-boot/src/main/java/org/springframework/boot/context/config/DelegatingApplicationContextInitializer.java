@@ -58,7 +58,7 @@ public class DelegatingApplicationContextInitializer implements
 	}
 
 	private List<Class<?>> getInitializerClasses(ConfigurableEnvironment env) {
-		String classNames = env.getProperty(PROPERTY_NAME);
+		String classNames = env.getProperty(PROPERTY_NAME); // 获取context.initializer.classes的值
 		List<Class<?>> classes = new ArrayList<Class<?>>();
 		if (StringUtils.hasLength(classNames)) {
 			for (String className : StringUtils.tokenizeToStringArray(classNames, ",")) {
@@ -94,7 +94,7 @@ public class DelegatingApplicationContextInitializer implements
 	private ApplicationContextInitializer<?> instantiateInitializer(Class<?> contextClass,
 			Class<?> initializerClass) {
 		Class<?> requireContextClass = GenericTypeResolver.resolveTypeArgument(
-				initializerClass, ApplicationContextInitializer.class);
+				initializerClass, ApplicationContextInitializer.class); // 解析泛型参数类型
 		Assert.isAssignable(requireContextClass, contextClass,
 				String.format(
 						"Could not add context initializer [%s]"
@@ -104,7 +104,7 @@ public class DelegatingApplicationContextInitializer implements
 						initializerClass.getName(), requireContextClass.getName(),
 						contextClass.getName()));
 		return (ApplicationContextInitializer<?>) BeanUtils
-				.instantiateClass(initializerClass);
+				.instantiateClass(initializerClass); // 实例化
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })

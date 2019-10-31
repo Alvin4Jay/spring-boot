@@ -247,13 +247,14 @@ public class SpringApplication {
 		}
 		this.webEnvironment = deduceWebEnvironment(); // 判断是否是web环境
 		setInitializers((Collection) getSpringFactoriesInstances(
-				ApplicationContextInitializer.class));
+				ApplicationContextInitializer.class)); // 获取ApplicationContextInitializer
+		// 获取spring.factories中配置的ApplicationListener
 		setListeners((Collection) getSpringFactoriesInstances(ApplicationListener.class));
-		this.mainApplicationClass = deduceMainApplicationClass(); // 启动类
+		this.mainApplicationClass = deduceMainApplicationClass(); // 推断启动类
 	}
 
 	private boolean deduceWebEnvironment() {
-		for (String className : WEB_ENVIRONMENT_CLASSES) {
+		for (String className : WEB_ENVIRONMENT_CLASSES) { // 这些类都存在才是web环境
 			if (!ClassUtils.isPresent(className, null)) {
 				return false;
 			}
@@ -266,7 +267,7 @@ public class SpringApplication {
 			StackTraceElement[] stackTrace = new RuntimeException().getStackTrace();
 			for (StackTraceElement stackTraceElement : stackTrace) {
 				if ("main".equals(stackTraceElement.getMethodName())) {
-					return Class.forName(stackTraceElement.getClassName());
+					return Class.forName(stackTraceElement.getClassName()); // 获取启动类
 				}
 			}
 		}
@@ -286,10 +287,10 @@ public class SpringApplication {
 		StopWatch stopWatch = new StopWatch();
 		stopWatch.start();
 		ConfigurableApplicationContext context = null;
-		FailureAnalyzers analyzers = null;
+		FailureAnalyzers analyzers = null; // 失败分析器
 		configureHeadlessProperty();
 		SpringApplicationRunListeners listeners = getRunListeners(args); // 查找SpringApplicationRunListener
-		listeners.starting(); // 调用SpringApplicationRunListener.starting()方法，发送ApplicationStartedEvent事件
+		listeners.starting(); // 调用EventPublishingRunListener.starting()方法，发送ApplicationStartedEvent事件
 		try {
 			ApplicationArguments applicationArguments = new DefaultApplicationArguments(
 					args); // args参数解析
@@ -384,14 +385,14 @@ public class SpringApplication {
 	}
 
 	private <T> Collection<? extends T> getSpringFactoriesInstances(Class<T> type,
-			Class<?>[] parameterTypes, Object... args) {
+			Class<?>[] parameterTypes, Object... args) { // 参数类型、参数值
 		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-		// Use names and ensure unique to protect against duplicates
+		// Use names and ensure unique to protect against duplicates 去重
 		Set<String> names = new LinkedHashSet<String>(
 				SpringFactoriesLoader.loadFactoryNames(type, classLoader));
 		List<T> instances = createSpringFactoriesInstances(type, parameterTypes,
-				classLoader, args, names);
-		AnnotationAwareOrderComparator.sort(instances);
+				classLoader, args, names); // 实例化
+		AnnotationAwareOrderComparator.sort(instances); // 排序
 		return instances;
 	}
 
@@ -402,7 +403,7 @@ public class SpringApplication {
 		List<T> instances = new ArrayList<T>(names.size());
 		for (String name : names) {
 			try {
-				Class<?> instanceClass = ClassUtils.forName(name, classLoader);
+				Class<?> instanceClass = ClassUtils.forName(name, classLoader); // 加载类
 				Assert.isAssignable(type, instanceClass);
 				Constructor<?> constructor = instanceClass
 						.getDeclaredConstructor(parameterTypes);
@@ -466,7 +467,7 @@ public class SpringApplication {
 				composite.addPropertySource(new SimpleCommandLinePropertySource(
 						name + "-" + args.hashCode(), args));
 				composite.addPropertySource(source);
-				sources.replace(name, composite);
+				sources.replace(name, composite); // 替换
 			}
 			else { // 添加命令行属性源
 				sources.addFirst(new SimpleCommandLinePropertySource(args));
@@ -707,7 +708,7 @@ public class SpringApplication {
 		List<Object> runners = new ArrayList<Object>();
 		runners.addAll(context.getBeansOfType(ApplicationRunner.class).values());
 		runners.addAll(context.getBeansOfType(CommandLineRunner.class).values());
-		AnnotationAwareOrderComparator.sort(runners);
+		AnnotationAwareOrderComparator.sort(runners); // 排序
 		for (Object runner : new LinkedHashSet<Object>(runners)) {
 			if (runner instanceof ApplicationRunner) {
 				callRunner((ApplicationRunner) runner, args);
@@ -745,9 +746,9 @@ public class SpringApplication {
 				listeners.finished(context, exception); // 发送异常事件
 			}
 			finally {
-				reportFailure(analyzers, exception);
+				reportFailure(analyzers, exception); // 失败分析
 				if (context != null) {
-					context.close();
+					context.close(); // 关闭上下文
 				}
 			}
 		}
@@ -757,6 +758,7 @@ public class SpringApplication {
 		ReflectionUtils.rethrowRuntimeException(exception);
 	}
 
+	// 使用FailureAnalyzers分析启动失败原因
 	private void reportFailure(FailureAnalyzers analyzers, Throwable failure) {
 		try {
 			if (analyzers != null && analyzers.analyzeAndReport(failure)) {
@@ -1093,7 +1095,7 @@ public class SpringApplication {
 	 * @return the listeners
 	 */
 	public Set<ApplicationListener<?>> getListeners() {
-		return asUnmodifiableOrderedSet(this.listeners);
+		return asUnmodifiableOrderedSet(this.listeners); // 返回已排序的listeners
 	}
 
 	/**

@@ -52,11 +52,12 @@ class EnableConfigurationPropertiesImportSelector implements ImportSelector {
 				EnableConfigurationProperties.class.getName(), false);
 		Object[] type = (attributes != null) ? (Object[]) attributes.getFirst("value")
 				: null;
-		if (type == null || type.length == 0) {
+		if (type == null || type.length == 0) { // 未指定具体的@ConfigurationProperties注解的Bean类型
 			return new String[] {
 					ConfigurationPropertiesBindingPostProcessorRegistrar.class
 							.getName() };
 		}
+		// 指定了具体的@ConfigurationProperties注解的Bean类型
 		return new String[] { ConfigurationPropertiesBeanRegistrar.class.getName(),
 				ConfigurationPropertiesBindingPostProcessorRegistrar.class.getName() };
 	}
@@ -73,17 +74,18 @@ class EnableConfigurationPropertiesImportSelector implements ImportSelector {
 			MultiValueMap<String, Object> attributes = metadata
 					.getAllAnnotationAttributes(
 							EnableConfigurationProperties.class.getName(), false);
-			List<Class<?>> types = collectClasses(attributes.get("value"));
+			List<Class<?>> types = collectClasses(attributes.get("value")); // 确定@ConfigurationProperties注解的类
 			for (Class<?> type : types) {
-				String prefix = extractPrefix(type);
+				String prefix = extractPrefix(type); // 获取@ConfigurationProperties注解的prefix值
 				String name = (StringUtils.hasText(prefix) ? prefix + "-" + type.getName()
-						: type.getName());
+						: type.getName()); // 确定bean name
 				if (!registry.containsBeanDefinition(name)) {
-					registerBeanDefinition(registry, type, name);
+					registerBeanDefinition(registry, type, name);// 注册@ConfigurationProperties注解的类的BeanDefinition
 				}
 			}
 		}
 
+		// 根据@ConfigurationProperties注解，获取prefix值
 		private String extractPrefix(Class<?> type) {
 			ConfigurationProperties annotation = AnnotationUtils.findAnnotation(type,
 					ConfigurationProperties.class);
@@ -93,6 +95,7 @@ class EnableConfigurationPropertiesImportSelector implements ImportSelector {
 			return "";
 		}
 
+		// 收集@ConfigurationProperties注解的类
 		private List<Class<?>> collectClasses(List<Object> list) {
 			ArrayList<Class<?>> result = new ArrayList<Class<?>>();
 			for (Object object : list) {
@@ -105,16 +108,17 @@ class EnableConfigurationPropertiesImportSelector implements ImportSelector {
 			return result;
 		}
 
+		// 注册@ConfigurationProperties注解的类的BeanDefinition
 		private void registerBeanDefinition(BeanDefinitionRegistry registry,
 				Class<?> type, String name) {
 			BeanDefinitionBuilder builder = BeanDefinitionBuilder
 					.genericBeanDefinition(type);
 			AbstractBeanDefinition beanDefinition = builder.getBeanDefinition();
-			registry.registerBeanDefinition(name, beanDefinition);
+			registry.registerBeanDefinition(name, beanDefinition); // 注册@ConfigurationProperties注解的类的BeanDefinition
 
 			ConfigurationProperties properties = AnnotationUtils.findAnnotation(type,
 					ConfigurationProperties.class);
-			Assert.notNull(properties,
+			Assert.notNull(properties, // 断言@ConfigurationProperties存在
 					"No " + ConfigurationProperties.class.getSimpleName()
 							+ " annotation found on  '" + type.getName() + "'.");
 		}

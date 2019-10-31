@@ -38,6 +38,6 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-public @interface NestedConfigurationProperty {
+public @interface NestedConfigurationProperty { // 该注解无实际的作用，只是表示注解的字段是个嵌套的类型
 
 }

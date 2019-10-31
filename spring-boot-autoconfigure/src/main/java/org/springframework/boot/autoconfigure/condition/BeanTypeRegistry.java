@@ -95,7 +95,7 @@ final class BeanTypeRegistry implements SmartInitializingSingleton {
 		if (!listableBeanFactory.containsLocalBean(BEAN_NAME)) {
 			BeanDefinition bd = new RootBeanDefinition(BeanTypeRegistry.class);
 			bd.getConstructorArgumentValues().addIndexedArgumentValue(0, beanFactory);
-			listableBeanFactory.registerBeanDefinition(BEAN_NAME, bd);
+			listableBeanFactory.registerBeanDefinition(BEAN_NAME, bd); // 注册BeanTypeRegistry BeanDefinition
 
 		}
 		return listableBeanFactory.getBean(BEAN_NAME, BeanTypeRegistry.class);
@@ -127,7 +127,7 @@ final class BeanTypeRegistry implements SmartInitializingSingleton {
 	 * the case of {@link FactoryBean FactoryBeans}. Will include singletons but will not
 	 * cause early bean initialization.
 	 * @param annotation the annotation to match (must not be {@code null})
-	 * @return the names of beans (or objects created by FactoryBeans) annoated with the
+	 * @return the names of beans (or objects created by FactoryBeans) annotated with the
 	 * given annotation, or an empty set if none
 	 */
 	Set<String> getNamesForAnnotation(Class<? extends Annotation> annotation) {
@@ -135,7 +135,7 @@ final class BeanTypeRegistry implements SmartInitializingSingleton {
 		Set<String> matches = new LinkedHashSet<String>();
 		for (Map.Entry<String, Class<?>> entry : this.beanTypes.entrySet()) {
 			if (entry.getValue() != null && AnnotationUtils
-					.findAnnotation(entry.getValue(), annotation) != null) {
+					.findAnnotation(entry.getValue(), annotation) != null) { // 查找指定的注解
 				matches.add(entry.getKey());
 			}
 		}
@@ -166,6 +166,7 @@ final class BeanTypeRegistry implements SmartInitializingSingleton {
 	}
 
 	private boolean requiresEagerInit(String factoryBeanName) {
+		// 如果factoryBeanName对应的Bean是FactoryBean，且未实例化，则返回true
 		return (factoryBeanName != null && this.beanFactory.isFactoryBean(factoryBeanName)
 				&& !this.beanFactory.containsSingleton(factoryBeanName));
 	}
@@ -184,10 +185,10 @@ final class BeanTypeRegistry implements SmartInitializingSingleton {
 	}
 
 	private void addBeanType(String name) {
-		if (this.beanFactory.containsSingleton(name)) {
+		if (this.beanFactory.containsSingleton(name)) { // 如果包含name的单例且已经实例化
 			this.beanTypes.put(name, this.beanFactory.getType(name));
 		}
-		else if (!this.beanFactory.isAlias(name)) {
+		else if (!this.beanFactory.isAlias(name)) { // 判断是否是别名
 			addBeanTypeForNonAliasDefinition(name);
 		}
 	}
